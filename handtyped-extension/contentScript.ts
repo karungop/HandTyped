@@ -1,16 +1,97 @@
-let stream = null;
-let video = null;
+// TypeScript version of contentScript.js
+// Add type annotations and interfaces for clarity and type safety
+
+// Remove the reference types line for 'chrome' and declare chrome as any
+// @ts-ignore
+const chrome: any = window.chrome;
+
+// Declare MediaPipe globals
+// These are attached to window by the UMD bundles
+export {};
+declare global {
+  interface Window {
+    Hands: any;
+    Camera: any;
+  }
+}
+
+interface GestureBinding {
+  name: string;
+  landmarks: Array<{ x: number; y: number; z: number }>;
+  boundKey: string;
+}
+
+let stream: MediaStream | null = null;
+let video: HTMLVideoElement | null = null;
 let tracking = false;
-let hands = null;
-let camera = null;
-
-let lastDetected = null;
-let lastFeedbackTimeout = null;
+let hands: any = null;
+let camera: any = null;
+let lastDetected: any = null;
+let lastFeedbackTimeout: number | null = null;
 let pendingAddGesture = false;
-let pendingLandmarks = null;
+let pendingLandmarks: any = null;
 
-// Handle messages from popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+// --- Begin inlined gestureHandler.js functions ---
+function normalizeLandmarks(landmarks: Array<{ x: number; y: number; z: number }>) {
+  const wrist = landmarks[0];
+  const centered = landmarks.map(pt => ({
+    x: pt.x - wrist.x,
+    y: pt.y - wrist.y,
+    z: pt.z - wrist.z
+  }));
+  const scale = Math.max(...centered.map(pt => Math.sqrt(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z)));
+  if (scale === 0) return centered;
+  return centered.map(pt => ({ x: pt.x/scale, y: pt.y/scale, z: pt.z/scale }));
+}
+
+function landmarkDistance(a: Array<{ x: number; y: number; z: number }>, b: Array<{ x: number; y: number; z: number }>) {
+  if (a.length !== b.length) return Infinity;
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) {
+    const dx = a[i].x - b[i].x;
+    const dy = a[i].y - b[i].y;
+    const dz = a[i].z - b[i].z;
+    sum += dx*dx + dy*dy + dz*dz;
+  }
+  return Math.sqrt(sum / a.length);
+}
+
+function matchGesture(currentLandmarks: Array<{ x: number; y: number; z: number }>, bindings: GestureBinding[], threshold = 0.2): GestureBinding | null {
+  const normCurrent = normalizeLandmarks(currentLandmarks);
+  let bestMatch: GestureBinding | null = null;
+  let bestDist = Infinity;
+  for (const binding of bindings) {
+    if (!binding.landmarks) continue;
+    const normStored = normalizeLandmarks(binding.landmarks);
+    const dist = landmarkDistance(normCurrent, normStored);
+    if (dist < threshold && dist < bestDist) {
+      bestDist = dist;
+      bestMatch = binding;
+    }
+  }
+  return bestMatch;
+}
+// --- End inlined gestureHandler.js functions ---
+
+// --- Begin inlined gestureBindings.js functions ---
+function addGesture(name: string, landmarks: any, key: string) {
+  getAllBindings().then(bindings => {
+    const gesture: GestureBinding = { name, landmarks, boundKey: key };
+    bindings.push(gesture);
+    chrome.storage.local.set({ gestures: bindings });
+  });
+}
+
+function getAllBindings(): Promise<GestureBinding[]> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get("gestures", (data) => {
+      resolve(data.gestures || []);
+    });
+  });
+}
+// --- End inlined gestureBindings.js functions ---
+
+chrome.runtime.onMessage.addListener((message: any, sender, sendResponse) => {
   console.log("Content Script: message received", message);
   if (message.action === 'startDetection') {
     startDetection();
@@ -20,7 +101,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     pendingAddGesture = true;
     showFeedback('Show your gesture to the camera...');
   }
-  
 });
 
 async function startDetection() {
@@ -37,13 +117,13 @@ async function startDetection() {
   video.style.width = '160px';
   document.body.appendChild(video);
 
-  tracking = true; // ✅ Move this up to ensure stopDetection() can run later
+  tracking = true;
 
   try {
     await loadMediaPipeAndStart(video);
   } catch (err) {
     console.error("Failed to start MediaPipe:", err);
-    // stopDetection(); // Optional: clean up if load fails
+    // stopDetection();
   }
 }
 
@@ -55,7 +135,6 @@ function stopDetection() {
     return;
   }
 
-  // Stop MediaPipe Camera loop
   if (camera && typeof camera.stop === 'function') {
     camera.stop();
     console.log("Camera stopped");
@@ -64,7 +143,6 @@ function stopDetection() {
     console.warn("Camera object missing or doesn't have .stop()");
   }
 
-  // Close the MediaPipe Hands instance
   if (hands && typeof hands.close === 'function') {
     hands.close();
     console.log("Hands instance closed");
@@ -73,7 +151,6 @@ function stopDetection() {
     console.warn("Hands object missing or doesn't have .close()");
   }
 
-  // Stop webcam stream
   if (stream) {
     stream.getTracks().forEach((track) => {
       track.stop();
@@ -82,7 +159,6 @@ function stopDetection() {
     stream = null;
   }
 
-  // Remove the video element from the DOM
   if (video && video.parentNode) {
     video.parentNode.removeChild(video);
     console.log("Video element removed");
@@ -93,16 +169,15 @@ function stopDetection() {
   console.log("Detection fully stopped");
 }
 
-
-async function loadMediaPipeAndStart(videoEl) {
+async function loadMediaPipeAndStart(videoEl: HTMLVideoElement) {
   // Helper to load a script if not already loaded
-  function loadScriptOnce(src) {
+  function loadScriptOnce(src: string): Promise<void> {
     return new Promise((resolve, reject) => {
       if ([...document.scripts].some(s => s.src.includes(src))) return resolve();
       const script = document.createElement('script');
       script.src = chrome.runtime.getURL(src);
-      script.onload = resolve;
-      script.onerror = reject;
+      script.onload = () => resolve(); // Fix: event handler signature
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
       document.head.appendChild(script);
     });
   }
@@ -113,7 +188,7 @@ async function loadMediaPipeAndStart(videoEl) {
   await loadScriptOnce('lib/mediapipe/camera_utils.js');
 
   hands = new window.Hands({
-    locateFile: (file) => chrome.runtime.getURL(`lib/mediapipe/${file}`)
+    locateFile: (file: string) => chrome.runtime.getURL(`lib/mediapipe/${file}`)
   });
 
   hands.setOptions({
@@ -123,7 +198,7 @@ async function loadMediaPipeAndStart(videoEl) {
     minTrackingConfidence: 0.7,
   });
 
-  hands.onResults(async results => {
+  hands.onResults(async (results: any) => {
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       const landmarks = results.multiHandLandmarks[0];
       lastDetected = landmarks;
@@ -156,13 +231,12 @@ async function loadMediaPipeAndStart(videoEl) {
   camera.start();
 }
 
-function simulateKeypress(key) {
-  // Map key name to KeyboardEvent code if needed
+function simulateKeypress(key: string) {
   const event = new KeyboardEvent('keydown', { key: key, bubbles: true });
   document.dispatchEvent(event);
 }
 
-function showFeedback(msg) {
+function showFeedback(msg: string) {
   let overlay = document.getElementById('handtyped-feedback');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -180,8 +254,8 @@ function showFeedback(msg) {
   }
   overlay.textContent = msg;
   if (lastFeedbackTimeout) clearTimeout(lastFeedbackTimeout);
-  lastFeedbackTimeout = setTimeout(() => {
-    overlay.remove();
+  lastFeedbackTimeout = window.setTimeout(() => {
+    overlay && overlay.remove();
   }, 1500);
 }
 
@@ -195,64 +269,4 @@ function promptForKeyAndSave() {
   } else {
     showFeedback('Gesture not saved.');
   }
-}
-
-// --- Begin inlined gestureHandler.js functions ---
-function normalizeLandmarks(landmarks) {
-  const wrist = landmarks[0];
-  const centered = landmarks.map(pt => ({
-    x: pt.x - wrist.x,
-    y: pt.y - wrist.y,
-    z: pt.z - wrist.z
-  }));
-  const scale = Math.max(...centered.map(pt => Math.sqrt(pt.x*pt.x + pt.y*pt.y + pt.z*pt.z)));
-  if (scale === 0) return centered;
-  return centered.map(pt => ({ x: pt.x/scale, y: pt.y/scale, z: pt.z/scale }));
-}
-
-function landmarkDistance(a, b) {
-  if (a.length !== b.length) return Infinity;
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) {
-    const dx = a[i].x - b[i].x;
-    const dy = a[i].y - b[i].y;
-    const dz = a[i].z - b[i].z;
-    sum += dx*dx + dy*dy + dz*dz;
-  }
-  return Math.sqrt(sum / a.length);
-}
-
-function matchGesture(currentLandmarks, bindings, threshold = 0.2) {
-  const normCurrent = normalizeLandmarks(currentLandmarks);
-  let bestMatch = null;
-  let bestDist = Infinity;
-  for (const binding of bindings) {
-    if (!binding.landmarks) continue;
-    const normStored = normalizeLandmarks(binding.landmarks);
-    const dist = landmarkDistance(normCurrent, normStored);
-    if (dist < threshold && dist < bestDist) {
-      bestDist = dist;
-      bestMatch = binding;
-    }
-  }
-  return bestMatch;
-}
-// --- End inlined gestureHandler.js functions ---
-
-// --- Begin inlined gestureBindings.js functions ---
-function addGesture(name, landmarks, key) {
-  getAllBindings().then(bindings => {
-    const gesture = { name, landmarks, boundKey: key };
-    bindings.push(gesture);
-    chrome.storage.local.set({ gestures: bindings });
-  });
-}
-
-function getAllBindings() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get("gestures", (data) => {
-      resolve(data.gestures || []);
-    });
-  });
-}
-// --- End inlined gestureBindings.js functions ---
+} 

@@ -18,17 +18,15 @@
       "16": "icons/icon16.png"
     }
   },
-  "content_scripts": [{
-    "matches": ["<all_urls>"],
-    "js": ["contentScript.js"]
-  }],
   "web_accessible_resources": [
   {
     "resources": [
       "lib/mediapipe/hands.js",
       "lib/mediapipe/camera_utils.js",
-      "lib/mediapipe/*.wasm",
-      "lib/mediapipe/*.data"
+      "lib/mediapipe/hands_solution_packed_assets_loader.js",
+      "lib/mediapipe/hands_solution_simd_wasm_bin.js",
+      "lib/mediapipe/hands_solution_simd_wasm_bin.wasm",
+      "lib/mediapipe/hands_solution_packed_assets.data"
     ],
     "matches": ["<all_urls>"]
   }
