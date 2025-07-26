@@ -1,0 +1,45 @@
+{
+  "name": "handtyped-electron",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "scripts": {
+    "rebuild": "electron-rebuild",
+    "start": "webpack serve",
+    "electron": "electron ."
+  },
+  "build": {
+    "appId": "com.handtyped.app",
+    "productName": "HandTyped",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "directories": {
+      "output": "dist_electron"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-react": "^7.27.1",
+    "babel-loader": "^10.0.0",
+    "electron": "^37.2.4",
+    "electron-builder": "^26.0.12",
+    "html-webpack-plugin": "^5.6.3",
+    "webpack": "^5.100.2",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  },
+  "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/hands": "^0.4.1675469240",
+    "electron-is-dev": "^3.0.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "robotjs": "^0.6.0"
+  }
+}
