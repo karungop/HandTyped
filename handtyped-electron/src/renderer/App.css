@@ -1,0 +1,92 @@
+/* Global styles */
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #f8f8f8;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  padding: 1rem;
+  margin: 0;
+  background-color: #2d2d2d;
+  color: white;
+}
+
+/* Container for inputs and buttons */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  justify-content: center;
+  background-color: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.controls input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 200px;
+}
+
+.controls button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Video and canvas layout */
+.video-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-top: 2rem;
+}
+
+video,
+canvas {
+  width: 640px;
+  height: 480px;
+  border-radius: 8px;
+  background-color: black;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Message display */
+.message {
+  text-align: center;
+  margin-top: 1rem;
+  font-weight: bold;
+  color: green;
+}
+
+/* JSON preview */
+.landmarks-display {
+  margin: 2rem auto;
+  width: 90%;
+  max-width: 800px;
+  background: #f1f1f1;
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  color: #444;
+}
