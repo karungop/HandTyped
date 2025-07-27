@@ -16,6 +16,7 @@ function App() {
   const [currentGesture, setCurrentGesture] = useState(null);
   const hands = useRef(null);
   const [savedGestures, setSavedGestures] = useState([]);
+  const lastLogTimeRef = useRef(0); 
 
   const onResults = (results) => {
     const canvas = canvasRef.current;
@@ -34,9 +35,17 @@ function App() {
       const matchedGesture = findBestMatch(normalized, savedGestures);
       
       if (matchedGesture) {
+        const now = Date.now();
+        if (now - lastLogTimeRef.current > 500) {
+        lastLogTimeRef.current = now;
         setCurrentGesture(matchedGesture);
         console.log(`Detected gesture: ${matchedGesture.name}, key bind: ${matchedGesture.key}`);
         setMessage(`Detected: ${matchedGesture.name} (${matchedGesture.key})`);
+        if (window.electronAPI?.pressKey) {
+            window.electronAPI.pressKey(matchedGesture.key);
+         }
+        }
+        
       } else {
         setCurrentGesture(null);
         setMessage('No gesture detected');

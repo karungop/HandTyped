@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const robot = require('robotjs');
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -44,6 +45,15 @@ ipcMain.handle('get-gestures', async () => {
   } catch (err) {
     console.error('Error reading gestures:', err);
     return [];
+  }
+});
+
+ipcMain.on('press-key', (event, key) => {
+//   console.log(`Pressing key: ${key}`);
+  try {
+    robot.keyTap(key); // e.g., 'a', 'enter', 'space'
+  } catch (err) {
+    console.error('Failed to press key with robotjs:', err);
   }
 });
 
