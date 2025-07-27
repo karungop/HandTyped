@@ -5,7 +5,8 @@
   "scripts": {
     "rebuild": "electron-rebuild",
     "start": "webpack serve",
-    "electron": "electron ."
+    "electron": "electron .", 
+    "build": "electron-builder"
   },
   "build": {
     "appId": "com.handtyped.app",
@@ -13,8 +14,13 @@
     "mac": {
       "category": "public.app-category.utilities"
     },
+    "files": [
+      "src/**/*",
+      "dist/**/*"
+    ],
     "directories": {
-      "output": "dist_electron"
+      "output": "dist_electron", 
+      "buildResources": "assets" 
     }
   },
   "keywords": [],

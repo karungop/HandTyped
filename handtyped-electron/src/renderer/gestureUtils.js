@@ -27,7 +27,7 @@ export function compareLandmarks(l1, l2) {
   }
   
   const avgDiff = totalDiff / l1.length;
-  const threshold = 0.1; // Slightly more lenient threshold
+  const threshold = 0.15; // Slightly more lenient threshold
   
   // Debug logging
   // console.log(`Gesture comparison - Avg diff: ${avgDiff.toFixed(4)}, Max diff: ${maxDiff.toFixed(4)}, Threshold: ${threshold}`);

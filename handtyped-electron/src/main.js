@@ -14,7 +14,11 @@ function createWindow () {
     }
   });
 
-  win.loadURL('http://localhost:8080'); // or loadFile if using static
+  if (isDev) {
+  win.loadURL('http://localhost:8080');
+} else {
+  win.loadFile(path.join(__dirname, '../public/index.html'));
+}
 }
 
 const gesturePath = path.join(__dirname, 'gesture.json');
@@ -48,13 +52,35 @@ ipcMain.handle('get-gestures', async () => {
   }
 });
 
-ipcMain.on('press-key', (event, key) => {
+ipcMain.on('press-key', (event, keyString) => {
 //   console.log(`Pressing key: ${key}`);
   try {
-    robot.keyTap(key); // e.g., 'a', 'enter', 'space'
+    const keys = keyString.trim().split(/\s+/); // Split on spaces
+
+    for (const key of keys) {
+      const lowerKey = key.toLowerCase();
+
+      // Handle special keys
+      if (['enter', 'space', 'tab', 'backspace', 'up', 'down', 'left', 'right', 'escape'].includes(lowerKey)) {
+        robot.keyTap(lowerKey);
+      }
+      // Handle single characters or words (typed one letter at a time)
+      else if (lowerKey.length === 1) {
+        robot.keyTap(lowerKey);
+      } else {
+        robot.typeString(key); // fallback for full words
+      }
+    }
   } catch (err) {
     console.error('Failed to press key with robotjs:', err);
   }
+});
+
+// Delete one gesture by name
+ipcMain.on('delete-gesture', (event, gestureName) => {
+  const gestures = JSON.parse(fs.readFileSync(gesturesFile, 'utf-8') || '[]');
+  const updated = gestures.filter(g => g.name !== gestureName);
+  fs.writeFileSync(gesturesFile, JSON.stringify(updated, null, 2), 'utf-8');
 });
 
 app.whenReady().then(createWindow);

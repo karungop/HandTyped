@@ -169,10 +169,6 @@ function App() {
     setPendingLandmarks(null);
   };
 
-  const clearGestures = () => {
-    setSavedGestures([]);
-    setMessage('All gestures cleared.');
-  };
 
   return (
     <div className="app">
@@ -184,9 +180,6 @@ function App() {
         </button>
         <button onClick={stopCamera} disabled={camera === null}>
           Stop Camera
-        </button>
-        <button onClick={clearGestures} style={{ backgroundColor: '#dc3545' }}>
-          Clear All Gestures
         </button>
       </div>
 
@@ -218,6 +211,13 @@ function App() {
         <div className="video-container">
           <video ref={videoRef} style={{ display: 'none' }}  />
           <canvas ref={canvasRef} width={640} height={480} />
+          <div>
+      {pendingLandmarks && (
+        <pre className="landmarks-display">
+          {JSON.stringify(pendingLandmarks, null, 2)}
+        </pre>
+      )}
+      </div>
         </div>
 
         <div className="info-panel">
@@ -234,21 +234,29 @@ function App() {
           <div className="saved-gestures">
             <h3>Saved Gestures ({savedGestures.length}):</h3>
             <ul>
-              {savedGestures.map((gesture, index) => (
-                <li key={index}>
-                  {gesture.name} → {gesture.key}
-                </li>
-              ))}
+                {savedGestures.map((gesture, index) => (
+                    <li key={index}>
+                    {gesture.name} → {gesture.key}
+                    <button
+                        onClick={() => {
+                        const updated = savedGestures.filter(g => g.name !== gesture.name);
+                        setSavedGestures(updated);
+                        setMessage(`Deleted gesture: ${gesture.name}`);
+                        if (window.electronAPI?.deleteGesture) {
+                            window.electronAPI.deleteGesture(gesture.name);
+                        }
+                        }}
+                        style={{ marginLeft: '10px', color: 'red' }}
+                    >
+                        Delete
+                    </button>
+                    </li>
+                ))}
             </ul>
           </div>
         </div>
       </div>
-
-      {pendingLandmarks && (
-        <pre className="landmarks-display">
-          {JSON.stringify(pendingLandmarks, null, 2)}
-        </pre>
-      )}
+    
     </div>
   );
 }
