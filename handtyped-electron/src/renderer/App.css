@@ -14,6 +14,13 @@ h1 {
   color: white;
 }
 
+/* Main layout container */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 /* Container for inputs and buttons */
 .controls {
   display: flex;
@@ -46,13 +53,25 @@ h1 {
   cursor: not-allowed;
 }
 
+/* Main content area with camera and info side by side */
+.main-content {
+  display: flex;
+  flex: 1;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* Video and canvas layout */
 .video-container {
+  flex: 0 0 auto;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   position: relative;
-  margin-top: 2rem;
 }
 
 video,
@@ -69,12 +88,73 @@ canvas {
   left: 0;
 }
 
+/* Info panel on the right */
+.info-panel {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 /* Message display */
 .message {
   text-align: center;
-  margin-top: 1rem;
+  padding: 1rem;
   font-weight: bold;
   color: green;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+/* Current gesture display */
+.current-gesture {
+  background: #e8f5e8;
+  border: 2px solid #28a745;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.current-gesture h3 {
+  margin: 0 0 0.5rem 0;
+  color: #28a745;
+}
+
+.current-gesture p {
+  margin: 0.25rem 0;
+  font-weight: bold;
+}
+
+/* Saved gestures display */
+.saved-gestures {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  flex: 1;
+}
+
+.saved-gestures h3 {
+  margin: 0 0 0.5rem 0;
+  color: #495057;
+}
+
+.saved-gestures ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.saved-gestures li {
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  background: white;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
 }
 
 /* JSON preview */
@@ -89,4 +169,38 @@ canvas {
   white-space: pre-wrap;
   overflow-x: auto;
   color: #444;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1200px) {
+  .main-content {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .info-panel {
+    width: 100%;
+    max-width: 640px;
+  }
+  
+  video,
+  canvas {
+    width: 100%;
+    max-width: 640px;
+    height: auto;
+    aspect-ratio: 4/3;
+  }
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .controls input,
+  .controls button {
+    width: 100%;
+    max-width: 300px;
+  }
 }
