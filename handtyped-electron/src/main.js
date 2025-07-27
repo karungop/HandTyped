@@ -17,25 +17,36 @@ function createWindow () {
 }
 
 const gesturePath = path.join(__dirname, 'gesture.json');
-
-ipcMain.on('save-gesture', (event, gestureData) => {
+ipcMain.on('save-gesture', (event, gestureJSON) => {
+  const gestureFilePath = path.join(__dirname, 'gesture.json');
   try {
-    let existing = [];
-    if (fs.existsSync(gesturePath)) {
-      const raw = fs.readFileSync(gesturePath);
-      if (raw.length > 0) existing = JSON.parse(raw);
-    }
+    const currentData = fs.existsSync(gestureFilePath)
+      ? JSON.parse(fs.readFileSync(gestureFilePath, 'utf8'))
+      : [];
 
-    existing.push(gestureData);
-    fs.writeFileSync(gesturePath, JSON.stringify(existing, null, 2));
-    console.log('Gesture saved:', gestureData);
+    const parsedGesture = JSON.parse(gestureJSON);
+    currentData.push(parsedGesture);
+
+    fs.writeFileSync(gestureFilePath, JSON.stringify(currentData, null, 2));
+    // console.log('Saved gesture:', parsedGesture);
   } catch (err) {
-    console.error('Failed to save gesture:', err);
+    console.error('Error saving gesture:', err);
   }
 });
 
-
-
-
+ipcMain.handle('get-gestures', async () => {
+  try {
+    if (!fs.existsSync(gesturePath)) {
+      return [];
+    }
+    const data = fs.readFileSync(gesturePath, 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    console.error('Error reading gestures:', err);
+    return [];
+  }
+});
 
 app.whenReady().then(createWindow);
+
+

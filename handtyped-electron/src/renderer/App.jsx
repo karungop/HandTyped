@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Hands } from '@mediapipe/hands';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import * as cam from '@mediapipe/camera_utils';
-import { normalizeLandmarks } from './gestureUtils';
+import { normalizeLandmarks, compareLandmarks } from './gestureUtils';
 import './App.css';
 
 function App() {
@@ -15,19 +15,29 @@ function App() {
   const [pendingLandmarks, setPendingLandmarks] = useState(null);
   const [message, setMessage] = useState('');
   const hands = useRef(null);
+  const [savedGestures, setSavedGestures] = useState([]);
+
 
   const onResults = (results) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+  const canvas = canvasRef.current;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      const landmarks = results.multiHandLandmarks[0];
-      drawConnectors(ctx, landmarks, Hands.HAND_CONNECTIONS, { color: '#00FF00' });
-      drawLandmarks(ctx, landmarks, { color: '#FF0000' });
+  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+    const landmarks = results.multiHandLandmarks[0];
+    drawConnectors(ctx, landmarks, Hands.HAND_CONNECTIONS, { color: '#00FF00' });
+    drawLandmarks(ctx, landmarks, { color: '#FF0000' });
+
+    const normalized = normalizeLandmarks(landmarks);
+    for (const gesture of savedGestures) {
+      if (compareLandmarks(normalized, gesture.landmarks)) {
+        console.log(`Detected gesture: ${gesture.name}, key bind: ${gesture.key}`);
+        break;
+      }
     }
-  };
+  }
+};
 
   useEffect(() => {
     hands.current = new Hands({
@@ -42,7 +52,16 @@ function App() {
     });
 
     hands.current.onResults(onResults);
+
+    if (window.electronAPI?.getGestures) {
+    window.electronAPI.getGestures().then((gestures) => {
+      setSavedGestures(gestures);
+      console.log('Loaded gestures:', gestures);
+    });
+    }
   }, []);
+
+  
 
   const startCamera = async () => {
     if (typeof videoRef.current !== 'object') return;
@@ -115,7 +134,10 @@ function App() {
       [gestureName]: { key: gestureKey, landmarks: pendingLandmarks },
     }));
 
-    // window.electronAPI.saveGesture(JSON.stringify(newGesture));
+    console.log('electronAPI:', window.electronAPI);
+    if (window.electronAPI?.saveGesture) {
+        window.electronAPI.saveGesture(JSON.stringify(newGesture));
+    } 
 
     setMessage(`Gesture "${gestureName}" saved with key "${gestureKey}".`);
 
