@@ -14,11 +14,11 @@ function createWindow () {
     }
   });
 
-  if (isDev) {
-  win.loadURL('http://localhost:8080');
-} else {
-  win.loadFile(path.join(__dirname, '../public/index.html'));
-}
+  // if (isDev) {
+win.loadURL('http://localhost:8080');
+// } else {
+//   win.loadFile(path.join(__dirname, '../public/index.html'));
+// }
 }
 
 const gesturePath = path.join(__dirname, 'gesture.json');
