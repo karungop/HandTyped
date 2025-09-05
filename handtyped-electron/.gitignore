@@ -2,3 +2,4 @@ node_modules/
 src/gesture.json
 node_modules 2/
 .DS_Store/
+.env

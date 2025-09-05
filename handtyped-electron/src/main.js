@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const robot = require('robotjs');
+const isDev = require('electron-is-dev');
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -14,11 +15,29 @@ function createWindow () {
     }
   });
 
-  // if (isDev) {
-win.loadURL('http://localhost:8080');
-// } else {
-//   win.loadFile(path.join(__dirname, '../public/index.html'));
-// }
+  win.webContents.openDevTools();
+  
+  if (isDev) {
+    win.loadURL('http://localhost:8080');
+  } else {
+    console.log('Loading production file:', path.join(__dirname, '../dist/index.html'));
+    // Check if the file exists
+    const indexPath = path.join(__dirname, '../dist/index.html');
+    if (fs.existsSync(indexPath)) {
+      console.log('Production file exists, loading...');
+      win.loadFile(indexPath);
+    } else {
+      console.error('Production file does not exist at:', indexPath);
+      console.log('Available files in dist directory:');
+      const distPath = path.join(__dirname, '../dist');
+      if (fs.existsSync(distPath)) {
+        const files = fs.readdirSync(distPath);
+        console.log(files);
+      } else {
+        console.log('dist directory does not exist');
+      }
+    }
+  }
 }
 
 const gesturePath = path.join(__dirname, 'gesture.json');
@@ -78,9 +97,9 @@ ipcMain.on('press-key', (event, keyString) => {
 
 // Delete one gesture by name
 ipcMain.on('delete-gesture', (event, gestureName) => {
-  const gestures = JSON.parse(fs.readFileSync(gesturesFile, 'utf-8') || '[]');
+  const gestures = JSON.parse(fs.readFileSync(gesturePath, 'utf-8') || '[]');
   const updated = gestures.filter(g => g.name !== gestureName);
-  fs.writeFileSync(gesturesFile, JSON.stringify(updated, null, 2), 'utf-8');
+  fs.writeFileSync(gesturePath, JSON.stringify(updated, null, 2), 'utf-8');
 });
 
 app.whenReady().then(createWindow);
