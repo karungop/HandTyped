@@ -1,4 +1,4 @@
-How to use:
+How to use:\n
 Currently still in mock stage
 To run app locally, cd into handtyped-electron
 Install all necessary packages, run the following commmand in the terminal: npm install
